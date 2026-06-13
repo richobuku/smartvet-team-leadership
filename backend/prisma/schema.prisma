@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  team_member
+  team_leader
+  executive
+  admin
+}
+
+enum UserStatus {
+  active
+  probation
+  on_leave
+  departed
+}
+
+enum ChurnRisk {
+  low
+  medium
+  high
+}
+
+enum Frequency {
+  daily
+  weekly
+  monthly
+  quarterly
+}
+
+enum Status {
+  green
+  yellow
+  red
+}
+
+enum Visibility {
+  team
+  company
+}
+
+enum CoachingOutcome {
+  pending
+  implemented
+  in_progress
+  blocked
+}
+
+enum GoNoGo {
+  on_track
+  slightly_off
+  significantly_off
+}
+
+enum EmploymentType {
+  staff
+  intern
+}
+
+enum InternshipStatus {
+  active
+  completed
+  converted
+  ended
+}
+
+enum ConversionDecision {
+  pending
+  recommend_hire
+  extend
+  end_internship
+}
+
+enum InternshipReadiness {
+  on_track
+  exceeding
+  at_risk
+}
+
+enum OneOnOneType {
+  weekly
+  monthly
+  quarterly
+}
+
+enum OneOnOneStatus {
+  scheduled
+  completed
+  missed
+}
+
+enum FeedbackType {
+  underperformance
+  quality_issue
+  behavior
+  conflict
+  churn_risk
+}
+
+enum FeedbackStatus {
+  open
+  closed
+}
+
+enum CoachingDecision {
+  pending
+  improving
+  flat
+  declining
+}
+
+enum CheckInType {
+  day3
+  week1
+  week2
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  leaderId    String?
+  leader      User?    @relation("TeamLeader", fields: [leaderId], references: [id])
+  members     User[]   @relation("TeamMembers")
+  metrics     Metric[]
+  frameworks  EvaluationFramework[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([leaderId])
+}
+
+model User {
+  id              String     @id @default(cuid())
+  name            String
+  email           String     @unique
+  passwordHash    String
+  phone           String?
+  emailVerified           Boolean   @default(false)
+  verificationToken       String?   @unique
+  verificationTokenExpiry DateTime?
+  role            Role
+  teamId          String?
+  team            Team?      @relation("TeamMembers", fields: [teamId], references: [id])
+  managerId       String?
+  manager         User?      @relation("ManagerReports", fields: [managerId], references: [id])
+  reports         User[]     @relation("ManagerReports")
+  ledTeams        Team[]     @relation("TeamLeader")
+  weeklyTarget    Float?
+  promotionTrack  String?
+  churnRisk       ChurnRisk  @default(low)
+  status          UserStatus @default(active)
+  employmentType  EmploymentType @default(staff)
+  startDate       DateTime   @default(now())
+  endDate         DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  metricDatapoints   MetricDatapoint[] @relation("DatapointUser")
+  submittedDatapoints MetricDatapoint[] @relation("DatapointSubmitter")
+  checkIns           DailyCheckIn[]    @relation("CheckInUser")
+  checkInsManaged    DailyCheckIn[]    @relation("CheckInManager")
+  weeklyDashboards   WeeklyDashboard[] @relation("DashboardUser")
+  weeklyDashboardsManaged WeeklyDashboard[] @relation("DashboardManager")
+  scorecards         MonthlyScorecard[] @relation("ScorecardUser")
+  scorecardsManaged  MonthlyScorecard[] @relation("ScorecardManager")
+  coachingLogs       CoachingLog[]     @relation("CoachingUser")
+  coachingLogsGiven  CoachingLog[]     @relation("CoachingManager")
+  celebrations       CelebrationLog[]  @relation("CelebrationUser")
+  celebrationsGiven  CelebrationLog[]  @relation("CelebrationManager")
+  internship         Internship?       @relation("InternshipUser")
+  internshipsSupervised Internship[]   @relation("InternshipSupervisor")
+
+  oneOnOnes             OneOnOne[]             @relation("OneOnOneUser")
+  oneOnOnesManaged      OneOnOne[]             @relation("OneOnOneManager")
+  feedbackConversations FeedbackConversation[] @relation("FeedbackUser")
+  feedbackGiven         FeedbackConversation[] @relation("FeedbackManager")
+  growthPlans           GrowthPlan[]
+  guideProgress         GuideProgress[]
+
+  @@index([teamId])
+  @@index([managerId])
+  @@index([role])
+  @@index([churnRisk])
+}
+
+model Metric {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  teamId          String
+  team            Team      @relation(fields: [teamId], references: [id])
+  frequency       Frequency
+  target          Float
+  unit            String
+  calculation     String?
+  greenThreshold  Float     @default(95)
+  yellowThreshold Float     @default(80)
+  dataSource      String    @default("manual_entry")
+  createdAt       DateTime  @default(now())
+
+  datapoints      MetricDatapoint[]
+  weeklyEntries   WeeklyDashboardMetric[]
+  scorecardKpis   ScorecardKpi[]
+
+  @@index([teamId])
+}
+
+model MetricDatapoint {
+  id           String   @id @default(cuid())
+  metricId     String
+  metric       Metric   @relation(fields: [metricId], references: [id])
+  userId       String
+  user         User     @relation("DatapointUser", fields: [userId], references: [id])
+  date         DateTime
+  value        Float
+  notes        String?
+  submittedById String?
+  submittedBy  User?    @relation("DatapointSubmitter", fields: [submittedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([metricId, userId])
+  @@index([userId, date])
+}
+
+model DailyCheckIn {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("CheckInUser", fields: [userId], references: [id])
+  managerId String
+  manager   User     @relation("CheckInManager", fields: [managerId], references: [id])
+  date      DateTime @default(now())
+  bigWin    String?
+  blocker   String?
+  needsHelp Boolean  @default(false)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, date])
+  @@index([managerId, date])
+}
+
+model WeeklyDashboard {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation("DashboardUser", fields: [userId], references: [id])
+  managerId          String
+  manager            User     @relation("DashboardManager", fields: [managerId], references: [id])
+  week               DateTime
+  overallStatus      Status   @default(green)
+  biggestWin         String?
+  biggestBlocker     String?
+  managerReviewNotes String?
+  submittedAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  metrics WeeklyDashboardMetric[]
+
+  @@unique([userId, week])
+  @@index([managerId, week])
+}
+
+model WeeklyDashboardMetric {
+  id          String          @id @default(cuid())
+  dashboardId String
+  dashboard   WeeklyDashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  metricId    String
+  metric      Metric          @relation(fields: [metricId], references: [id])
+  target      Float
+  actual      Float
+  status      Status
+
+  @@index([dashboardId])
+  @@index([metricId])
+}
+
+model MonthlyScorecard {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation("ScorecardUser", fields: [userId], references: [id])
+  managerId          String
+  manager            User     @relation("ScorecardManager", fields: [managerId], references: [id])
+  month              DateTime
+  wins               String[]
+  blockers           String[]
+  pivots             String[]
+  nextMonthStrategy  String?
+  managerFeedback    String?
+  selfReflection     String?
+  goNoGo             GoNoGo?
+  submittedAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  kpis ScorecardKpi[]
+
+  @@unique([userId, month])
+  @@index([managerId, month])
+}
+
+model ScorecardKpi {
+  id          String           @id @default(cuid())
+  scorecardId String
+  scorecard   MonthlyScorecard @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+  metricId    String
+  metric      Metric           @relation(fields: [metricId], references: [id])
+  target      Float
+  actual      Float
+  status      Status
+  notes       String?
+
+  @@index([scorecardId])
+  @@index([metricId])
+}
+
+model CoachingLog {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation("CoachingUser", fields: [userId], references: [id])
+  managerId String
+  manager   User            @relation("CoachingManager", fields: [managerId], references: [id])
+  date      DateTime        @default(now())
+  topic     String
+  notes     String?
+  action    String?
+  followUp  DateTime?
+  outcome   CoachingOutcome @default(pending)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  checkIns  CoachingCheckIn[]
+
+  @@index([userId, date])
+  @@index([managerId, date])
+}
+
+model CoachingCheckIn {
+  id            String           @id @default(cuid())
+  coachingLogId String
+  coachingLog   CoachingLog      @relation(fields: [coachingLogId], references: [id], onDelete: Cascade)
+  type          CheckInType
+  date          DateTime         @default(now())
+  notes         String?
+  decision      CoachingDecision @default(pending)
+
+  @@index([coachingLogId])
+}
+
+model CelebrationLog {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation("CelebrationUser", fields: [userId], references: [id])
+  managerId   String
+  manager     User       @relation("CelebrationManager", fields: [managerId], references: [id])
+  date        DateTime   @default(now())
+  achievement String
+  impact      String?
+  visibility  Visibility @default(team)
+  notes       String?
+  createdAt   DateTime   @default(now())
+
+  @@index([userId])
+  @@index([managerId])
+  @@index([visibility, date])
+}
+
+model EvaluationFramework {
+  id              String   @id @default(cuid())
+  name            String
+  teamId          String
+  team            Team     @relation(fields: [teamId], references: [id])
+  description     String?
+  kpis            Json
+  trafficLightLogic String?
+  goNoGoGates     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([teamId])
+}
+
+model Internship {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  user               User               @relation("InternshipUser", fields: [userId], references: [id])
+  supervisorId       String
+  supervisor         User               @relation("InternshipSupervisor", fields: [supervisorId], references: [id])
+  track              String
+  startDate          DateTime
+  plannedEndDate     DateTime
+  status             InternshipStatus   @default(active)
+  conversionDecision ConversionDecision @default(pending)
+  conversionNotes    String?
+  decidedAt          DateTime?
+  readiness          InternshipReadiness @default(on_track)
+  overallAssessment  String?
+  assessmentUpdatedAt DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([supervisorId])
+  @@index([status])
+}
+
+model OneOnOne {
+  id           String         @id @default(cuid())
+  userId       String
+  user         User           @relation("OneOnOneUser", fields: [userId], references: [id])
+  managerId    String
+  manager      User           @relation("OneOnOneManager", fields: [managerId], references: [id])
+  type         OneOnOneType
+  scheduledAt  DateTime
+  status       OneOnOneStatus @default(scheduled)
+  notes        String?
+  actionItems  String[]       @default([])
+  recapNotes   String?
+  completedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([managerId, scheduledAt])
+}
+
+model FeedbackConversation {
+  id               String         @id @default(cuid())
+  userId           String
+  user             User           @relation("FeedbackUser", fields: [userId], references: [id])
+  managerId        String
+  manager          User           @relation("FeedbackManager", fields: [managerId], references: [id])
+  conversationType FeedbackType
+  date             DateTime       @default(now())
+  behavior         String?
+  rootCause        String?
+  impact           String?
+  actionPlan       String?
+  followUpDate     DateTime?
+  status           FeedbackStatus @default(open)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([managerId, status])
+}
+
+model GrowthPlan {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  quarter            DateTime
+  skills             Json
+  promotionReadiness String?
+  mentorNotes        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, quarter])
+}
+
+model MentorshipGuide {
+  id        String   @id @default(cuid())
+  role      String
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  progress  GuideProgress[]
+}
+
+model GuideProgress {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id])
+  guideId        String
+  guide          MentorshipGuide @relation(fields: [guideId], references: [id])
+  completedItems String[]        @default([])
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([userId, guideId])
+}

@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: "DM Sans", system-ui, sans-serif;
+  background: #FBF6EE;
+  color: #2B2118;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
