@@ -106,8 +106,8 @@ export default function WeeklyReview() {
             const actual = Number(form.entries[m.id]) || 0;
             const status = calcStatus(actual, m.target, m.greenThreshold, m.yellowThreshold);
             return (
-              <div key={m.id} className="flex items-center gap-3">
-                <label className="flex-1 text-sm font-medium text-navy">
+              <div key={m.id} className="flex items-center gap-3 flex-wrap">
+                <label className="flex-1 min-w-[140px] text-sm font-medium text-navy">
                   {m.name} <span className="text-navy/40 font-normal">(target: {m.target} {m.unit})</span>
                 </label>
                 <input
@@ -115,7 +115,7 @@ export default function WeeklyReview() {
                   step="0.1"
                   value={form.entries[m.id]}
                   onChange={(e) => updateEntry(m.id, e.target.value)}
-                  className="w-28 rounded-lg border border-light px-2 py-1 text-right font-mono"
+                  className="w-20 sm:w-28 rounded-lg border border-light px-2 py-1 text-right font-mono"
                 />
                 <StatusPill status={status} label={status.toUpperCase()} />
               </div>

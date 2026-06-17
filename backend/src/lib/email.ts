@@ -12,6 +12,16 @@ const EMAIL_FROM = process.env.EMAIL_FROM || "SmartVet Performance <noreply@smar
 const LOGO_CID = "smartvet-logo";
 const LOGO_PATH = path.join(__dirname, "..", "assets", "email-logo.png");
 
+// Escapes user-supplied text before interpolating it into email HTML templates.
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Wraps email body HTML with a shared header bearing the SmartVet logo, so
 // every email feels consistent and on-brand.
 export function emailLayout(bodyHtml: string): string {

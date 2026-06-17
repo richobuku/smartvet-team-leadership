@@ -1,5 +1,6 @@
 import "dotenv/config";
-import express from "express";
+import "express-async-errors";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 
 import authRoutes from "./routes/auth";
@@ -18,6 +19,10 @@ import oneOnOneRoutes from "./routes/oneonones";
 import feedbackRoutes from "./routes/feedback";
 import growthPlanRoutes from "./routes/growth-plans";
 import guideRoutes from "./routes/guides";
+import recruitmentRoutes from "./routes/recruitment";
+import panelRoutes from "./routes/panels";
+import binderRoutes from "./routes/binders";
+import pushRoutes from "./routes/push";
 import { startReminderCron } from "./lib/reminderCron";
 
 const app = express();
@@ -42,6 +47,22 @@ app.use("/oneonones", oneOnOneRoutes);
 app.use("/feedback", feedbackRoutes);
 app.use("/growth-plans", growthPlanRoutes);
 app.use("/guides", guideRoutes);
+app.use("/recruitment", recruitmentRoutes);
+app.use("/panels", panelRoutes);
+app.use("/binders", binderRoutes);
+app.use("/push", pushRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err);
+  if (err?.code === "P2025") return res.status(404).json({ error: "Not found" });
+  if (err?.code === "P2002") return res.status(409).json({ error: "Conflict: record already exists" });
+  if (err?.code === "P2003") return res.status(400).json({ error: "Invalid reference to a related record" });
+  res.status(500).json({ error: "Internal server error" });
+});
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

@@ -12,6 +12,7 @@ enum Role {
   team_leader
   executive
   admin
+  hr_manager
 }
 
 enum UserStatus {
@@ -121,6 +122,46 @@ enum CheckInType {
   week2
 }
 
+enum ApplicantStage {
+  received
+  shortlisted
+  interview_1
+  interview_2
+  hired
+  rejected
+}
+
+enum ApplicantActivityType {
+  note
+  stage_change
+  email
+}
+
+enum InterviewStandard {
+  ey
+  mckinsey
+}
+
+enum PanelStatus {
+  scheduled
+  in_progress
+  completed
+}
+
+enum PanelDecision {
+  pending
+  strong_yes
+  yes
+  no
+  strong_no
+}
+
+enum BinderStatus {
+  pending
+  in_progress
+  completed
+}
+
 model Team {
   id          String   @id @default(cuid())
   name        String
@@ -130,6 +171,7 @@ model Team {
   members     User[]   @relation("TeamMembers")
   metrics     Metric[]
   frameworks  EvaluationFramework[]
+  applicants  Applicant[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -184,10 +226,31 @@ model User {
   growthPlans           GrowthPlan[]
   guideProgress         GuideProgress[]
 
+  applicantsCreated     Applicant[]         @relation("ApplicantCreatedBy")
+  applicantHired        Applicant?          @relation("ApplicantHiredUser")
+  applicantActivities   ApplicantActivity[] @relation("ApplicantActivityCreatedBy")
+  panelsCreated         InterviewPanel[]    @relation("PanelCreatedBy")
+  panelMemberships      PanelMember[]       @relation("PanelMemberUser")
+  bindersCreated        CandidateBinder[]   @relation("BinderCreatedBy")
+  binderContributions   BinderContribution[] @relation("BinderContributor")
+  pushSubscriptions     PushSubscription[]
+
   @@index([teamId])
   @@index([managerId])
   @@index([role])
   @@index([churnRisk])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Metric {
@@ -488,4 +551,117 @@ model GuideProgress {
   updatedAt      DateTime        @updatedAt
 
   @@unique([userId, guideId])
+}
+
+model Applicant {
+  id          String         @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  position    String
+  source      String?
+  resumeUrl   String?
+  notes       String?
+  stage       ApplicantStage @default(received)
+  appliedDate DateTime       @default(now())
+  teamId      String?
+  team        Team?          @relation(fields: [teamId], references: [id])
+  createdById String
+  createdBy   User           @relation("ApplicantCreatedBy", fields: [createdById], references: [id])
+  hiredUserId String?        @unique
+  hiredUser   User?          @relation("ApplicantHiredUser", fields: [hiredUserId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  activities  ApplicantActivity[]
+  panels      InterviewPanel[]
+  binders     CandidateBinder[]
+
+  @@index([stage])
+  @@index([teamId])
+}
+
+model ApplicantActivity {
+  id          String                @id @default(cuid())
+  applicantId String
+  applicant   Applicant             @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  type        ApplicantActivityType
+  content     String?
+  fromStage   ApplicantStage?
+  toStage     ApplicantStage?
+  createdById String
+  createdBy   User                  @relation("ApplicantActivityCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime              @default(now())
+
+  @@index([applicantId, createdAt])
+}
+
+model InterviewPanel {
+  id              String            @id @default(cuid())
+  applicantId     String
+  applicant       Applicant         @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  stage           ApplicantStage
+  standard        InterviewStandard
+  scheduledAt     DateTime?
+  status          PanelStatus       @default(scheduled)
+  overallDecision PanelDecision     @default(pending)
+  hrNotes         String?
+  createdById     String
+  createdBy       User              @relation("PanelCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  members         PanelMember[]
+
+  @@index([applicantId])
+}
+
+model PanelMember {
+  id          String        @id @default(cuid())
+  panelId     String
+  panel       InterviewPanel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User           @relation("PanelMemberUser", fields: [userId], references: [id])
+  decision    PanelDecision  @default(pending)
+  scores      Json?
+  notes       String?
+  submittedAt DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@unique([panelId, userId])
+  @@index([userId])
+}
+
+model CandidateBinder {
+  id          String         @id @default(cuid())
+  applicantId String
+  applicant   Applicant      @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  stage       ApplicantStage
+  status      BinderStatus   @default(pending)
+  createdById String
+  createdBy   User           @relation("BinderCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  contributions BinderContribution[]
+
+  @@index([applicantId])
+}
+
+model BinderContribution {
+  id               String          @id @default(cuid())
+  binderId         String
+  binder           CandidateBinder @relation(fields: [binderId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User            @relation("BinderContributor", fields: [userId], references: [id])
+  summary          String?
+  strengths        String?
+  concerns         String?
+  probingQuestions Json?
+  submittedAt      DateTime?
+  createdAt        DateTime        @default(now())
+
+  @@unique([binderId, userId])
+  @@index([userId])
 }

@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma";
 
 export interface AuthUser {
   id: string;
-  role: "team_member" | "team_leader" | "executive" | "admin";
+  role: "team_member" | "team_leader" | "executive" | "admin" | "hr_manager";
   teamId: string | null;
 }
 
@@ -16,7 +16,12 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
+const DEFAULT_JWT_SECRET = "dev-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+
+if (process.env.NODE_ENV === "production" && JWT_SECRET === DEFAULT_JWT_SECRET) {
+  throw new Error("JWT_SECRET must be set to a non-default value in production");
+}
 
 export function signToken(user: AuthUser): string {
   return jwt.sign(user, JWT_SECRET, { expiresIn: "7d" });

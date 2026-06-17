@@ -28,6 +28,13 @@ import AdminFrameworks from "./pages/admin/Frameworks";
 import AdminInternships from "./pages/admin/Internships";
 import InternshipProfile from "./pages/InternshipProfile";
 
+import Recruitment from "./pages/hr/Recruitment";
+import ApplicantProfile from "./pages/hr/ApplicantProfile";
+import MyPanels from "./pages/panels/MyPanels";
+import PanelReview from "./pages/panels/PanelReview";
+import MyBinders from "./pages/binders/MyBinders";
+import BinderReview from "./pages/binders/BinderReview";
+
 function HomeForRole() {
   const { user } = useAuth();
   switch (user.role) {
@@ -37,6 +44,8 @@ function HomeForRole() {
       return <ExecutiveDashboard />;
     case "admin":
       return <AdminHome />;
+    case "hr_manager":
+      return <Recruitment />;
     default:
       return <PersonalDashboard />;
   }
@@ -84,6 +93,15 @@ export default function App() {
             <Route path="/admin/metrics" element={<RequireRole roles={["admin"]}><AdminMetrics /></RequireRole>} />
             <Route path="/admin/frameworks" element={<RequireRole roles={["admin"]}><AdminFrameworks /></RequireRole>} />
             <Route path="/admin/internships" element={<RequireRole roles={["admin"]}><AdminInternships /></RequireRole>} />
+
+            <Route path="/hr/recruitment" element={<RequireRole roles={["admin", "hr_manager", "executive"]}><Recruitment /></RequireRole>} />
+            <Route path="/hr/recruitment/:id" element={<RequireRole roles={["admin", "hr_manager", "executive"]}><ApplicantProfile /></RequireRole>} />
+
+            <Route path="/panels" element={<MyPanels />} />
+            <Route path="/panels/:id" element={<PanelReview />} />
+
+            <Route path="/binders" element={<MyBinders />} />
+            <Route path="/binders/:id" element={<BinderReview />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

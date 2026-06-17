@@ -43,7 +43,8 @@ export default function Frameworks() {
 
             <div>
               <h3 className="text-sm font-semibold text-navy mb-2">Weekly / Monthly KPIs</h3>
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+<table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="text-left text-navy/50 border-b border-light">
                     <th className="py-1 pr-2">KPI</th>
@@ -61,6 +62,7 @@ export default function Frameworks() {
                   ))}
                 </tbody>
               </table>
+</div>
             </div>
 
             <div>

@@ -1,4 +1,4 @@
-import { sendMail, emailLayout } from "./email";
+import { sendMail, emailLayout, escapeHtml } from "./email";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5174";
 
@@ -23,7 +23,7 @@ export async function sendVerificationEmail(to: string, name: string, token: str
     ].join("\n"),
     html: emailLayout(`
         <h2 style="margin:0 0 8px;">Welcome to SmartVet Team Leadership System</h2>
-        <p>Hi ${name},</p>
+        <p>Hi ${escapeHtml(name)},</p>
         <p>An account has been created for you. Please verify your email address before you can log in.</p>
         <p><a href="${link}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">Verify my email</a></p>
         <p style="color:#6b7280;font-size:13px;">If the button doesn't work, copy this link into your browser:<br>${link}</p>

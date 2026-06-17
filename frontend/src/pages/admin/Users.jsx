@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 
-const ROLES = ["team_member", "team_leader", "executive", "admin"];
+const ROLES = ["team_member", "team_leader", "executive", "admin", "hr_manager"];
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -106,7 +106,8 @@ export default function Users() {
 
       <div className="bg-white rounded-xl shadow-sm border border-light p-5">
         <h2 className="text-lg font-semibold text-navy mb-3">Existing Users</h2>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="text-left text-navy/50 border-b border-light">
               <th className="py-2 pr-2">Name</th>
@@ -149,6 +150,7 @@ export default function Users() {
             ))}
           </tbody>
         </table>
+</div>
       </div>
     </div>
   );

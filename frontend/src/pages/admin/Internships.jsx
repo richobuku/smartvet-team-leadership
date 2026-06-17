@@ -95,7 +95,8 @@ export default function Internships() {
 
       <div className="bg-white rounded-xl shadow-sm border border-light p-5">
         <h2 className="text-lg font-semibold text-navy mb-3">All Internships</h2>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="text-left text-navy/50 border-b border-light">
               <th className="py-2 pr-2">Intern</th>
@@ -131,6 +132,7 @@ export default function Internships() {
             ))}
           </tbody>
         </table>
+</div>
       </div>
     </div>
   );

@@ -32,7 +32,8 @@ export default function ExecutiveDashboard() {
 
       <div className="bg-white rounded-xl shadow-sm border border-light p-5">
         <h2 className="text-lg font-semibold text-navy mb-3">Company Scorecard</h2>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="text-left text-navy/50 border-b border-light">
               <th className="py-2 pr-2">Team</th>
@@ -54,6 +55,7 @@ export default function ExecutiveDashboard() {
             ))}
           </tbody>
         </table>
+</div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-light p-5">
@@ -67,7 +69,8 @@ export default function ExecutiveDashboard() {
               <p><span className="font-bold text-statusGreen text-lg">{data.internshipPipeline.recommendHire}</span> <span className="text-navy/60">recommended for hire</span></p>
               <p><span className="font-bold text-statusYellow text-lg">{data.internshipPipeline.pending}</span> <span className="text-navy/60">decision pending</span></p>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+<table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="text-left text-navy/50 border-b border-light">
                   <th className="py-2 pr-2">Intern</th>
@@ -89,13 +92,15 @@ export default function ExecutiveDashboard() {
                 ))}
               </tbody>
             </table>
+</div>
           </>
         )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-light p-5">
         <h2 className="text-lg font-semibold text-navy mb-3">Team Leader Performance</h2>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="text-left text-navy/50 border-b border-light">
               <th className="py-2 pr-2">Team Leader</th>
@@ -115,6 +120,7 @@ export default function ExecutiveDashboard() {
             ))}
           </tbody>
         </table>
+</div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

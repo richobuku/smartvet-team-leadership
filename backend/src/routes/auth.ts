@@ -44,7 +44,7 @@ router.post("/register", requireAuth, requireRole("admin"), async (req, res) => 
 
   sendVerificationEmail(user.email, user.name, verificationToken).catch(() => {});
 
-  const { passwordHash: _, ...safeUser } = user;
+  const { passwordHash: _, verificationToken: __, verificationTokenExpiry: ___, ...safeUser } = user;
   res.status(201).json(safeUser);
 });
 
